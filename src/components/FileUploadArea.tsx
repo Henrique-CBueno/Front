@@ -156,7 +156,6 @@ const FileUploadArea = ({ onClose, tokens }: FileUploadAreaProps) => {
         // Wait a moment before closing to show the completed progress bar
         setTimeout(() => {
           onClose();
-          window.location.reload();
         }, 700);
       } else {
         // Handle server errors
