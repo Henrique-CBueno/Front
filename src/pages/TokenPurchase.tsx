@@ -50,12 +50,12 @@ const TokenPurchase = () => {
   const tokenPackages = [
     {
       id: 1,
-      name: "Iniciante",
-      tokens: 10,
-      price: 9.90,
+      name: "Básico",
+      tokens: 15,
+      price: 14.99,
       description: "Perfeito para começar",
       features: [
-        "até 10 PDFs processados",
+        "até 15 PDFs processados",
         "Suporte",
         "Flashcards salvos em um banco de dados"
       ],
@@ -65,33 +65,33 @@ const TokenPurchase = () => {
     },
     {
       id: 2,
-      name: "Profissional",
-      tokens: 25,
-      price: 19.90,
-      description: "Ideal para uso regular",
+      name: "Anual",
+      tokens: 365,
+      price: 119.90,
+      description: "Ideal para usar o ano inteiro",
       features: [
-        "até 25 PDFs processados",
+        "até 365 PDFs processados",
         "Suporte",
         "Flashcards salvos em um banco de dados"
       ],
       icon: Star,
       popular: true,
-      savings: 20
+      savings: 67
     },
     {
       id: 3,
-      name: "Empresarial",
-      tokens: 50,
-      price: 34.90,
-      description: "Para uso intensivo",
+      name: "Mensal",
+      tokens: 60,
+      price: 34.99,
+      description: "Para uso mensal",
       features: [
-        "até 50 PDFs processados",
+        "até 60 PDFs processados",
         "Suporte",
         "Flashcards salvos em um banco de dados"
       ],
       icon: Crown,
       popular: false,
-      savings: 30
+      savings: 42
     }
   ];
 
