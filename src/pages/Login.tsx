@@ -254,6 +254,18 @@ const Login = () => {
                 )}
               </Button>
             </form>
+            {isLogin ? (
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="link"
+                  onClick={() => navigate("/reset-password")}
+                  className="text-sm cursor-pointer hover:text-primary/80 p-0 h-auto"
+                >
+                  Esqueci minha senha
+                </Button>
+              </div>
+
+            ) : ("")}
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
@@ -269,7 +281,7 @@ const Login = () => {
             </div>
           </CardContent>
         </Card>
-
+                
         <p className="text-center text-xs text-white/60 mt-6">
           Ao continuar, você concorda com nossos termos de uso.
         </p>

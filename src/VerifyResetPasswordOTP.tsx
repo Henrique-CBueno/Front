@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OTPInput } from "@/components/ui/otp-input";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
-import { BookOpen, Mail, ArrowLeft, RefreshCw } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { BookOpen, Mail, ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-const OTPVerification = (props: any) => {
+const VerifyResetPasswordOTP = () => {
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -15,24 +15,22 @@ const OTPVerification = (props: any) => {
   const [email, setEmail] = useState("");
   const [timerKey, setTimerKey] = useState(0);
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Pega o email da navegação ou do localStorage
-    const emailFromState = location.state?.email;
-    const emailFromStorage = localStorage.getItem("pendingVerificationEmail");
+    const emailFromStorage = sessionStorage.getItem("passwordResetEmail");
     
-    if (emailFromState) {
-      setEmail(emailFromState);
-      localStorage.setItem("pendingVerificationEmail", emailFromState);
-    } else if (emailFromStorage) {
+    if (emailFromStorage) {
       setEmail(emailFromStorage);
     } else {
-      // Se não tem email, redireciona para login
-      navigate("/login");
+      toast({
+        variant: "destructive",
+        title: "Sessão inválida",
+        description: "Nenhum email encontrado para redefinição. Por favor, comece novamente.",
+      });
+      navigate("/reset-password");
     }
-  }, [location.state, navigate]);
+  }, [navigate, toast]);
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +47,7 @@ const OTPVerification = (props: any) => {
     setIsVerifying(true);
 
     try {
-      const response = await fetch("http://localhost:8000/auth/verify-otp", {
+      const response = await fetch("http://localhost:8000/auth/reset-password/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,28 +64,22 @@ const OTPVerification = (props: any) => {
         throw new Error(data.detail || "Erro ao verificar código");
       }
 
-      toast({
-        title: "Email verificado!",
-        description: "Sua conta foi ativada com sucesso. Você pode fazer login agora.",
-      });
+      // Salva o token temporário para a próxima etapa
+      sessionStorage.setItem("resetToken", data.reset_token);
 
-      // Limpa o email pendente do localStorage
-      localStorage.removeItem("pendingVerificationEmail");
-      
-      // Redireciona para login
-      navigate("/login", { 
-        state: { 
-          message: "Conta verificada com sucesso! Faça login para continuar.",
-          email: email 
-        }
+      toast({
+        title: "Código verificado!",
+        description: "Agora você pode criar uma nova senha.",
       });
+      
+      navigate("/reset-password/confirm");
 
     } catch (error) {
-      console.error("Erro ao verificar OTP:", error);
+      console.error("Erro ao verificar OTP de reset:", error);
       toast({
         variant: "destructive",
         title: "Erro na verificação",
-        description: error instanceof Error ? error.message : "Erro inesperado. Tente novamente.",
+        description: error instanceof Error ? error.message : "Código inválido ou expirado.",
       });
     } finally {
       setIsVerifying(false);
@@ -100,14 +92,12 @@ const OTPVerification = (props: any) => {
     setIsResending(true);
 
     try {
-      const response = await fetch("http://localhost:8000/auth/resend-otp", {
+      const response = await fetch("http://localhost:8000/auth/reset-password/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: email,
-        }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
@@ -126,7 +116,7 @@ const OTPVerification = (props: any) => {
       setTimerKey(prev => prev + 1); // Reinicia o timer
 
     } catch (error) {
-      console.error("Erro ao reenviar OTP:", error);
+      console.error("Erro ao reenviar OTP de reset:", error);
       toast({
         variant: "destructive",
         title: "Erro ao reenviar",
@@ -151,7 +141,7 @@ const OTPVerification = (props: any) => {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">My Idea</h1>
-          <p className="text-white/80">Verificação de email</p>
+          <p className="text-white/80">Verificação de código</p>
         </div>
 
         <Card className="gradient-card shadow-card border-0 backdrop-blur-sm">
@@ -182,7 +172,7 @@ const OTPVerification = (props: any) => {
                 
                 <div className="text-center space-y-2">
                   <CountdownTimer
-                    initialSeconds={300} // 5 minutos
+                    initialSeconds={300} // 5 minutos, conforme backend
                     onComplete={handleCountdownComplete}
                     className="text-sm"
                     resetKey={timerKey}
@@ -198,11 +188,11 @@ const OTPVerification = (props: any) => {
                 >
                   {isVerifying ? (
                     <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Verificando...
                     </>
                   ) : (
-                    "Verificar código"
+                    "Verificar e continuar"
                   )}
                 </Button>
 
@@ -215,7 +205,7 @@ const OTPVerification = (props: any) => {
                 >
                   {isResending ? (
                     <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Reenviando...
                     </>
                   ) : (
@@ -237,13 +227,9 @@ const OTPVerification = (props: any) => {
             </div>
           </CardContent>
         </Card>
-
-        <p className="text-center text-xs text-white/60 mt-6">
-          Não recebeu o email? Verifique sua caixa de spam.
-        </p>
       </div>
     </div>
   );
 };
 
-export default OTPVerification;
+export default VerifyResetPasswordOTP;

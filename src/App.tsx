@@ -10,6 +10,9 @@ import TokenPurchase from "./pages/TokenPurchase";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 import { useAuth } from "./hooks/use-auth";
+import RequestPasswordReset from "./RequestPasswordReset";
+import VerifyResetPasswordOTP from "./VerifyResetPasswordOTP";
+import ConfirmPasswordReset from "./ConfirmPasswordReset";
 import Admin from "./pages/Admin";
 
 
@@ -42,7 +45,10 @@ const App = () => {
             {!user ? (
               <>
                 <Route path="/login" element={<Login />} />
-                <Route path="/otp-verification" element={<OTPVerification />} />
+                <Route path="/otp-verification" element={<OTPVerification/>} />
+                <Route path="/reset-password" element={<RequestPasswordReset />} />
+                <Route path="/reset-password/verify-otp" element={<VerifyResetPasswordOTP />} />
+                <Route path="/reset-password/confirm" element={<ConfirmPasswordReset />} />
                 <Route path="/*" element={<Login />} />
               </>
             ) : (
