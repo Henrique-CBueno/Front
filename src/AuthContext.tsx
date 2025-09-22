@@ -26,10 +26,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await fetch("http://localhost:8000/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Não autorizado");
+      if (!res.ok) {
+        // Se não autorizado, remove token e limpa usuário
+        localStorage.removeItem("token");
+        setUser(null);
+        return;
+      }
       const data = await res.json();
       setUser(data.User);
     } catch (_err) {
+      // Em caso de erro, remove token e limpa usuário
+      localStorage.removeItem("token");
       setUser(null);
     }
   };

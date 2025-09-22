@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { 
   Upload, 
   X, 
@@ -34,6 +35,7 @@ const FileUploadArea = ({ onClose, tokens }: FileUploadAreaProps) => {
   const [neededTokens, setNeededTokens] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -124,58 +126,66 @@ const FileUploadArea = ({ onClose, tokens }: FileUploadAreaProps) => {
   };
 
   // --- MODIFIED FUNCTION ---
-  const handleUpload = async () => {
-    if (!selectedFile) return;
+    const handleUpload = async () => {
+      if (!selectedFile) return;
 
-    setUploading(true);
-    setUploadProgress(0);
+      setUploading(true);
+      setUploadProgress(0);
 
-    const formData = new FormData();
-    formData.append("pdf", selectedFile);
+      const formData = new FormData();
+      formData.append("pdf", selectedFile);
 
-    try {
-      setUploadProgress(10);
-      setUploadProgress(30);
-      setUploadProgress(80);
-      
-      const response = await fetch('http://localhost:8000/logic/flashcards', {
-        headers: { 
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        method: 'POST',
-        body: formData,
-      });
-
-      setUploadProgress(100);
-
-      if (response.ok) {
-        toast({
-          title: "PDF enviado com sucesso!",
-          description: `${selectedFile.name} foi processado.`,
+      try {
+        setUploadProgress(10);
+        setUploadProgress(30);
+        setUploadProgress(80);
+        
+        const response = await fetch('http://localhost:8000/logic/flashcards', {
+          headers: { 
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          },
+          method: 'POST',
+          body: formData,
         });
-        // Wait a moment before closing to show the completed progress bar
-        setTimeout(() => {
-          onClose();
-        }, 700);
-      } else {
-        // Handle server errors
-        const errorData = await response.json().catch(() => ({ message: response.statusText }));
-        throw new Error(errorData.message || `Server responded with status ${response.status}`);
+
+        setUploadProgress(100);
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Atualizar tokens no frontend se disponível
+          if (data.updated_tokens !== undefined) {
+            // Força refresh dos dados do usuário
+            await refreshUser();
+          }
+          
+          toast({
+            title: "PDF enviado com sucesso!",
+            description: `${selectedFile.name} foi processado.`,
+          });
+          // Wait a moment before closing to show the completed progress bar
+          setTimeout(() => {
+            onClose();
+          }, 700);
+        } else {
+          // Handle server errors
+          const errorData = await response.json().catch(() => ({ message: response.statusText }));
+          throw new Error(errorData.message || `Server responded with status ${response.status}`);
+        }
+      } catch (error) {
+        console.error("Upload failed:", error);
+        setUploadProgress(0); // Reset progress on failure
+        toast({
+          title: "Erro no envio",
+          description: error instanceof Error ? error.message : "Não foi possível enviar o arquivo. Verifique sua conexão e tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        // The uploading state is set to false only after all operations,
+        // including potential error handling, are complete.
+        setUploading(false);
       }
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setUploadProgress(0); // Reset progress on failure
-      toast({
-        title: "Erro no envio",
-        description: error instanceof Error ? error.message : "Não foi possível enviar o arquivo. Verifique sua conexão e tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      // The uploading state is set to false only after all operations,
-      // including potential error handling, are complete.
-      setUploading(false);
-    }
-  };
+    };
 
   const resetFile = () => {
     setSelectedFile(null);

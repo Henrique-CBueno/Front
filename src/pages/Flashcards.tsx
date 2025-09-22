@@ -51,10 +51,10 @@ const Flashcards = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/dashboard")}
-                className="gap-2 w-2/3 lg:w-fit cursor-pointer hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition-smooth"
+                className="gap-2 w-full lg:w-fit cursor-pointer hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition-smooth"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Voltar aos Meus PDFs
+                <p className="text-sm lg:text-base">Voltar aos Meus PDFs</p>
               </Button>
               
               <div className="flex items-center gap-2">

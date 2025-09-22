@@ -144,6 +144,25 @@ const Sidebar = () => {
                   )}
                 </NavLink>
               ))}
+              {user.role === "admin" ? (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-smooth group ${
+                      isActive
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                    }`
+                  }
+                >
+                  <User className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && (
+                    <span className="font-medium">admin</span>
+                  )}
+                </NavLink>
+
+              
+              ) : ('')}
             </div>
           </nav>
 

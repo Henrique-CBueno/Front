@@ -2,22 +2,37 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { BookOpen, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth} from "@/hooks/use-auth";
+import { registerSchema, loginSchema } from "@/lib/validations";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const {refreshUser} = useAuth()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validação com Zod
+    try {
+      loginSchema.parse({ email, password });
+    } catch (error: any) {
+      const firstError = error.issues?.[0];
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: firstError?.message || "Dados inválidos",
+      });
+      return;
+    }
 
     try {
       const formData = new URLSearchParams();
@@ -32,7 +47,30 @@ const Login = () => {
         body: formData
       });
 
-      if (!res.ok) throw new Error("Não autorizado");
+      if (!res.ok) {
+        const errorData = await res.json();
+        
+        // Se a conta não está verificada, redireciona para verificação
+        if (res.status === 403 && errorData.detail?.includes("não verificada")) {
+          toast({
+            variant: "destructive",
+            title: "Conta não verificada",
+            description: "Verifique seu email para ativar sua conta.",
+          });
+          
+          // Salva email para verificação
+          localStorage.setItem("pendingVerificationEmail", email);
+          navigate("/otp-verification", { 
+            state: { 
+              email: email,
+              message: "Sua conta precisa ser verificada. Insira o código enviado por email."
+            }
+          });
+          return;
+        }
+        
+        throw new Error(errorData.detail || "Não autorizado");
+      }
 
       const data = await res.json();
 
@@ -46,28 +84,44 @@ const Login = () => {
       
       // Simular login/registro bem-sucedido
       toast({
-        title: isLogin ? "Login realizado!" : "Conta criada!",
-        description: isLogin ? "Bem-vindo de volta!" : "Sua conta foi criada com sucesso.",
+        title: "Login realizado!",
+        description: "Bem-vindo de volta!",
       });
 
       // Atualiza estado global / hook
       await refreshUser();
 
-
       navigate("/dashboard");
       
-  } catch (err) {
-    console.error("Login falhou:", err);
-  }
-    
-
+    } catch (err) {
+      console.error("Login falhou:", err);
+      toast({
+        variant: "destructive",
+        title: "Erro no login",
+        description: err instanceof Error ? err.message : "Erro inesperado. Tente novamente.",
+      });
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    // Validação com Zod
+    try {
+      registerSchema.parse({ email, password });
+    } catch (error: any) {
+      const firstError = error.issues?.[0];
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: firstError?.message || "Dados inválidos",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
-
       const userData = {
         email: email,
         password: password,
@@ -90,21 +144,30 @@ const Login = () => {
         });
         throw new Error("Não criado")
       };
+
+      const data = await res.json();
       
-      // Simular login/registro bem-sucedido
+      // Salva email para verificação
+      localStorage.setItem("pendingVerificationEmail", email);
+      
       toast({
-        title: isLogin ? "Login realizado!" : "Conta criada!",
-        description: isLogin ? "Bem-vindo de volta!" : "Sua conta foi criada com sucesso.",
+        title: "Conta criada!",
+        description: "Verifique seu email para o código de verificação.",
       });
 
-      setIsLogin(true)
-
+      // Redireciona para página de verificação OTP
+      navigate("/otp-verification", { 
+        state: { 
+          email: email,
+          message: "Conta criada com sucesso! Verifique seu email."
+        }
+      });
       
-  } catch (err) {
-    console.error("Login falhou:", err);
-  }
-    
-
+    } catch (err) {
+      console.error("Registro falhou:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -178,9 +241,17 @@ const Login = () => {
 
               <Button 
                 type="submit" 
+                disabled={!isLogin && isLoading}
                 className="w-full h-12 rounded-xl cursor-pointer gradient-primary hover:shadow-glow transition-smooth font-medium"
               >
-                {isLogin ? "Entrar" : "Criar Conta"}
+                {!isLogin && isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Criando conta...
+                  </>
+                ) : (
+                  isLogin ? "Entrar" : "Criar Conta"
+                )}
               </Button>
             </form>
 
