@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OTPInput } from "@/components/ui/otp-input";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
-import { BookOpen, Mail, ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
+import { BookOpen, Mail, ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 

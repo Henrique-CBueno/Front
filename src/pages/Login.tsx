@@ -145,7 +145,6 @@ const Login = () => {
         throw new Error("Não criado")
       };
 
-      const data = await res.json();
       
       // Salva email para verificação
       localStorage.setItem("pendingVerificationEmail", email);

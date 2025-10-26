@@ -7,7 +7,7 @@ import { BookOpen, Mail, ArrowLeft, RefreshCw } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-const OTPVerification = (props: any) => {
+const OTPVerification = () => {
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
